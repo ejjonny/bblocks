@@ -21,16 +21,9 @@ struct AppView: View {
                 Button {
                     app.exit()
                 } label: {
-                    if !app.areYouSure {
-                        Text("Exit Game")
-                            .appText()
-                            .section()
-                    } else {
-                        Text("Discard Game")
-                            .appText()
-                            .foregroundColor(.red)
-                            .section()
-                    }
+                    Text("Exit Game")
+                        .appText()
+                        .section()
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(.main)
@@ -40,29 +33,11 @@ struct AppView: View {
                 }
 #endif
                 Button {
-                    if app.game?.dirty == false {
-                        app.copy()
-                    } else {
-                        app.save()
-                    }
+                    app.copy()
                 } label: {
-                    ZStack {
-                        if app.gameSaving {
-                            Squinner()
-                                .foregroundColor(.accent1)
-                        }
-                        if app.game?.dirty == false {
-                            Text("Copy Code")
-                                .appText()
-                                .opacity(app.gameSaving ? 0 : 1)
-                        } else {
-                            Text("Save")
-                                .appText()
-                                .opacity(app.gameSaving ? 0 : 1)
-                        }
-                    }
+                    Text("Copy Code")
+                        .appText()
                 }
-                .disabled(app.gameSaving || app.game?.dirty == true)
                 .section()
                 .buttonStyle(.plain)
                 .foregroundColor(.main)
@@ -97,12 +72,16 @@ struct AppView: View {
             Button {
                 app.start()
             } label: {
-                Text("Start")
-                    .appText()
-                    .section()
+                if app.startingGame {
+                    Squinner()
+                } else {
+                    Text("Start")
+                        .appText()
+                        .section()
+                }
             }
             .buttonStyle(.plain)
-            .disabled(app.userField.isEmpty)
+            .disabled(app.userField.isEmpty || app.startingGame)
             Button {
                 app.back()
             } label: {

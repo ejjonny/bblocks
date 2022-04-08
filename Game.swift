@@ -14,19 +14,58 @@ class Game: ObservableObject {
         case prep
         case combat
     }
+    enum PlayerStatus {
+        case playing
+        case dead
+        case won(Player)
+    }
     @Published var grid: Grid<Block>
     @Published var mode: Mode = .base
     @Published var hint: String?
     let initialBaseSize = 2
-    let basePlacements = 8
+    let basePlacements = 6
     var players: [Player]
     var currentPlayerIndex = 0
     var id: String?
-    var dirty = true
     var local: Bool
     var user: String?
-    var canPlay: Bool {
+    let updated = PassthroughSubject<Game, Never>()
+    var currentPlayerCanPlay: Bool {
         currentPlayer.id == user || local
+    }
+    var playerStatus: PlayerStatus {
+        if local {
+            let alive = players.filter{ !$0.dead }
+            let finished = alive.count == 1
+            if finished, let winner = alive.first {
+                return .won(winner)
+            } else {
+                return .playing
+            }
+        }
+        let dead = players
+            .filter(\.dead)
+            .contains { $0.id == user }
+        let won = players
+            .filter { $0.id != user }
+            .allSatisfy { $0.dead }
+        if dead {
+            return .dead
+        } else if won,
+                  let winner = players.first(where: { !$0.dead }) {
+            return .won(winner)
+        } else {
+            return .playing
+        }
+    }
+    var finished: Bool {
+        switch playerStatus {
+        case .playing:
+            return false
+        case .dead,
+                .won:
+            return true
+        }
     }
     var currentPlayer: Player {
         get {
@@ -71,7 +110,7 @@ class Game: ObservableObject {
                 continue
             }
             if solutionDistance <= Double(basePlacements + 1) {
-                hint = "Your base is too close to the enemy!"
+                hint = "You can be captured on the first turn with your base there. Pick somewhere further from enemies."
                 return false
             }
         }
@@ -191,10 +230,10 @@ class Game: ObservableObject {
         return false
     }
     func tapped(_ i: Int) {
-        guard canPlay else {
+        guard currentPlayerCanPlay && !finished else {
             return
         }
-        dirty = true
+        defer { updated.send(self) }
         switch mode {
         case .base:
             if placeBase(currentPlayer.team, i: i) {

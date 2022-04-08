@@ -15,7 +15,7 @@ struct Player: Equatable {
     var dead = false
     var id: String
     var placements: Double {
-        Double(land) * Double(bases) / 8
+        Double(land) * Double(bases) / 3
     }
     var placementsLeft: Int {
         Int(placements.rounded(.down)) - placed

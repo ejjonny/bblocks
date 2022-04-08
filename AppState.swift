@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import Starscream
 
 class AppState: ObservableObject {
     enum Mode {
@@ -20,12 +21,13 @@ class AppState: ObservableObject {
     @Published var showShare = false
     @Published var gameField = String()
     @Published var userField = String()
-    @Published var gameSaving = false
-    @Published var areYouSure = false
+    @Published var startingGame = false
     let api = API.live()
     var canc = Set<AnyCancellable>()
-    static let width = 18
-    static let height = 25
+    var sock: GameSock?
+    let local = false
+    static let width = 13
+    static let height = 20
     static let rows: [[Block]] = (0..<height).map { _ in (0..<width).map { _ in .empty } }
     static let grid = Grid(rows: rows)
     init(_ mode: Mode) {
@@ -47,8 +49,7 @@ class AppState: ObservableObject {
     }
     func start() {
         nicknameUpdated(userField)
-        mode = .playing
-        game = .init(
+        let game = Game(
             grid: Self.grid,
             players: [
                 .init(team: .init(number: 1), id: userField),
@@ -56,40 +57,87 @@ class AppState: ObservableObject {
             ],
             mode: .base,
             id: nil,
-            local: true,
+            local: local,
             user: userField
         )
+        setGame(game)
+        if !local {
+            startingGame = true
+            api.saveGame(game)
+                .receive(on: DispatchQueue.main)
+                .sink { result in
+                    guard case let .failure(error) = result else {
+                        return
+                    }
+                    print(error)
+                    self.startingGame = false
+                } receiveValue: { output in
+                    self.gameField = output
+                    self.openGame()
+                }
+                .store(in: &canc)
+        } else {
+            mode = .playing
+        }
+    }
+    func setGame(_ newGame: Game) {
+        self.game = newGame
+        self.game?.id = self.gameField
+        self.game?.user = self.userField
+        if game?.players.map(\.id).contains(userField) == false,
+           let openSpot = self.game?.players.firstIndex(where: {
+            $0.id == ""
+        }) {
+            newGame.players[openSpot].id = userField
+        }
+        newGame.objectWillChange
+            .sink { _ in
+                self.objectWillChange.send()
+            }
+            .store(in: &canc)
+        if !local {
+            newGame.updated
+                .sink { game in
+                    let _ = self.sock?.write(game.string)
+                }
+                .store(in: &canc)
+        }
     }
     func exit() {
-        guard game?.dirty == false ||
-                areYouSure else {
-            areYouSure = true
-            return
+        if !local {
+            sock?.close()
+            canc.forEach { $0.cancel() }
+            canc.removeAll()
+            sock = nil
         }
-        areYouSure = false
         mode = .menu
         game = nil
     }
     func openGame() {
         nicknameUpdated(userField)
-        api.loadGame(gameField)
-            .receive(on: DispatchQueue.main)
-            .sink { result in
-                guard case let .failure(error) = result else {
-                    return
+        if !local {
+            sock = api.gameSock(gameField)
+            sock?.recieve()
+                .receive(on: DispatchQueue.main)
+                .sink { result in
+                    guard case let .failure(error) = result else {
+                        return
+                    }
+                    print(error)
+                } receiveValue: { value in
+                    self.setGame(value)
+                    self.startingGame = false
+                    self.mode = .playing
                 }
-                print(error)
-            } receiveValue: { loaded in
-                if self.game?.currentPlayer.id.isEmpty == true {
-                    self.game?.currentPlayer.id = self.userField
+                .store(in: &canc)
+            sock?.connectionStatus()
+                .receive(on: DispatchQueue.main)
+                .sink { connected in
+                    self.game = nil
+                    self.mode = .nameCode
                 }
-                self.game = loaded
-                self.game?.id = self.gameField
-                self.game?.user = self.userField
-                self.game?.dirty = false
-                self.mode = .playing
-            }
-            .store(in: &canc)
+                .store(in: &canc)
+        }
     }
     func copy() {
         guard let id = game?.id else {
@@ -102,47 +150,5 @@ class AppState: ObservableObject {
         pasteboard.declareTypes([.string], owner: nil)
         pasteboard.setString(id, forType: .string)
         #endif
-    }
-    func save() {
-//        guard false else {
-//            print(game!.string)
-//            print(Game(game!.string)!)
-//            return
-//        }
-        guard let game = game else {
-            return
-        }
-        gameSaving = true
-        if let id = game.id {
-            api.updateGame(id, game)
-                .receive(on: DispatchQueue.main)
-                .sink { result in
-                    guard case let .failure(error) = result else {
-                        return
-                    }
-                    print(error)
-                    self.gameSaving = false
-                } receiveValue: { success in
-                    print(success)
-                    self.gameSaving = false
-                    self.game?.dirty = false
-                }
-                .store(in: &canc)
-        } else {
-            api.saveGame(game)
-                .receive(on: DispatchQueue.main)
-                .sink { result in
-                    guard case let .failure(error) = result else {
-                        return
-                    }
-                    print(error)
-                    self.gameSaving = false
-                } receiveValue: { uid in
-                    game.id = uid
-                    self.gameSaving = false
-                    self.game?.dirty = false
-                }
-                .store(in: &canc)
-        }
     }
 }

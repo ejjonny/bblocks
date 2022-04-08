@@ -75,7 +75,7 @@ extension Text {
     }
     func appText2() -> some View {
         bold()
-            .font(.system(.title2, design: .rounded))
+            .font(.system(.body, design: .rounded))
     }
     func appText3() -> some View {
         bold()
@@ -91,7 +91,7 @@ extension View {
                     .foregroundColor(.alternate)
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(Color.accent1, lineWidth: 10)
+                            .strokeBorder(Color.accent1, lineWidth: 1)
                     )
             )
             .padding([.leading, .trailing])

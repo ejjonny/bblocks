@@ -16,27 +16,29 @@ struct GameView: View {
             ZoomableScrollView {
                 GridView(game: game)
                     .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .foregroundColor(game.currentPlayer.team.color.opacity(0.5))
-                    )
             }
-#endif
+            .clipShape(
+                RoundedRectangle(cornerRadius: 10)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(game.currentPlayer.team.color, lineWidth: 2)
+            )
+            .padding([.leading, .trailing])
+
+#else
             GridView(game: game)
                 .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .foregroundColor(game.currentPlayer.team.color.opacity(0.5))
-                )
                 .clipShape(
                     RoundedRectangle(cornerRadius: 10)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .strokeBorder(Color.main.opacity(0.5), lineWidth: 2)
+                        .strokeBorder(game.currentPlayer.team.color, lineWidth: 2)
                 )
                 .padding([.leading, .trailing])
                 .frame(height: 500)
+#endif
             HStack(alignment: .top) {
                 if let hint = game.hint {
                     Text(hint)
@@ -57,6 +59,8 @@ struct GameView: View {
                                         .appText2()
                                     Text("Bases: \(game.players[i].bases)")
                                         .appText2()
+                                    Text(String(format: "Blocks/turn: %.2f", game.players[i].placements))
+                                        .appText2()
                                 }
                             }
                         }
@@ -70,12 +74,26 @@ struct GameView: View {
             .section()
         }
         .overlay {
-            if game.dirty == false {
+            if game.currentPlayerCanPlay == false, !game.finished {
                 Text("Waiting for other player...")
                     .appText2()
-            } else if !game.canPlay {
-                Text("Tap Save to finish your turn...")
-                    .appText2()
+            }
+        }
+        .overlay {
+            switch game.playerStatus {
+            case .playing:
+                EmptyView()
+            case let .won(player):
+                if game.local {
+                    Text("\(player.team.name) wins!")
+                        .appText()
+                } else {
+                    Text("You won!")
+                        .appText()
+                }
+            case .dead:
+                Text("You died!")
+                    .appText()
             }
         }
     }

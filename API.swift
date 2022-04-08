@@ -9,6 +9,5 @@ import Combine
 
 struct API {
     let saveGame: (Game) -> AnyPublisher<String, Error>
-    let updateGame: (String, Game) -> AnyPublisher<String, Error>
-    let loadGame: (String) -> AnyPublisher<Game, Error>
+    let gameSock: (String) -> GameSock
 }

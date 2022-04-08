@@ -17,6 +17,8 @@
 		4E2000B627FA1FD600878F05 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E20008C27FA1FD400878F05 /* ContentView.swift */; };
 		4E2000B727FA1FD600878F05 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E20008D27FA1FD600878F05 /* Assets.xcassets */; };
 		4E2000B827FA1FD600878F05 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4E20008D27FA1FD600878F05 /* Assets.xcassets */; };
+		4E6ECAAB27FE7E74005C8E00 /* Starscream in Frameworks */ = {isa = PBXBuildFile; productRef = 4E6ECAAA27FE7E74005C8E00 /* Starscream */; };
+		4E6ECAAD27FE7EC1005C8E00 /* Starscream in Frameworks */ = {isa = PBXBuildFile; productRef = 4E6ECAAC27FE7EC1005C8E00 /* Starscream */; };
 		4EAB477327FB6E4000591148 /* djk.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EAB477227FB6E4000591148 /* djk.swift */; };
 		4EAB477427FB6E4000591148 /* djk.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EAB477227FB6E4000591148 /* djk.swift */; };
 		4EAB477627FB969500591148 /* Style.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EAB477527FB969500591148 /* Style.swift */; };
@@ -105,6 +107,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4EE6A19D27FBBFE7006CD46D /* Parsing in Frameworks */,
+				4E6ECAAB27FE7E74005C8E00 /* Starscream in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,6 +116,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4EE6A1A027FBC56A006CD46D /* Parsing in Frameworks */,
+				4E6ECAAD27FE7EC1005C8E00 /* Starscream in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -233,6 +237,7 @@
 			name = "bblocks (iOS)";
 			packageProductDependencies = (
 				4EE6A19C27FBBFE7006CD46D /* Parsing */,
+				4E6ECAAA27FE7E74005C8E00 /* Starscream */,
 			);
 			productName = "bblocks (iOS)";
 			productReference = 4E20009227FA1FD600878F05 /* bblocks.app */;
@@ -253,6 +258,7 @@
 			name = "bblocks (macOS)";
 			packageProductDependencies = (
 				4EE6A19F27FBC56A006CD46D /* Parsing */,
+				4E6ECAAC27FE7EC1005C8E00 /* Starscream */,
 			);
 			productName = "bblocks (macOS)";
 			productReference = 4E20009827FA1FD600878F05 /* bblocks.app */;
@@ -331,6 +337,7 @@
 			mainGroup = 4E20008527FA1FD400878F05;
 			packageReferences = (
 				4EE6A19B27FBBFE7006CD46D /* XCRemoteSwiftPackageReference "swift-parsing" */,
+				4E6ECAA927FE7E74005C8E00 /* XCRemoteSwiftPackageReference "Starscream" */,
 			);
 			productRefGroup = 4E20009327FA1FD600878F05 /* Products */;
 			projectDirPath = "";
@@ -810,6 +817,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		4E6ECAA927FE7E74005C8E00 /* XCRemoteSwiftPackageReference "Starscream" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/daltoniam/Starscream.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.0.0;
+			};
+		};
 		4EE6A19B27FBBFE7006CD46D /* XCRemoteSwiftPackageReference "swift-parsing" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/swift-parsing";
@@ -821,6 +836,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		4E6ECAAA27FE7E74005C8E00 /* Starscream */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4E6ECAA927FE7E74005C8E00 /* XCRemoteSwiftPackageReference "Starscream" */;
+			productName = Starscream;
+		};
+		4E6ECAAC27FE7EC1005C8E00 /* Starscream */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4E6ECAA927FE7E74005C8E00 /* XCRemoteSwiftPackageReference "Starscream" */;
+			productName = Starscream;
+		};
 		4EE6A19C27FBBFE7006CD46D /* Parsing */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 4EE6A19B27FBBFE7006CD46D /* XCRemoteSwiftPackageReference "swift-parsing" */;

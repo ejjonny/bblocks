@@ -32,7 +32,7 @@ struct Block: Identifiable, Hashable {
         case .base:
             return .accent4
         case .empty:
-            return .alternate
+            return .main.opacity(0.2)
         }
     }
 }
