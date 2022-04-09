@@ -25,6 +25,7 @@ class AppState: ObservableObject {
     let api = API.live()
     var canc = Set<AnyCancellable>()
     var sock: GameSock?
+    var gameSettings: Game.Settings?
     let local = false
     static let width = 13
     static let height = 20
@@ -58,7 +59,8 @@ class AppState: ObservableObject {
             mode: .base,
             id: nil,
             local: local,
-            user: userField
+            user: userField,
+            settings: .standard
         )
         setGame(game)
         if !local {
@@ -116,28 +118,35 @@ class AppState: ObservableObject {
     func openGame() {
         nicknameUpdated(userField)
         if !local {
-            sock = api.gameSock(gameField)
-            sock?.recieve()
-                .receive(on: DispatchQueue.main)
-                .sink { result in
-                    guard case let .failure(error) = result else {
-                        return
-                    }
-                    print(error)
-                } receiveValue: { value in
-                    self.setGame(value)
-                    self.startingGame = false
-                    self.mode = .playing
-                }
-                .store(in: &canc)
-            sock?.connectionStatus()
-                .receive(on: DispatchQueue.main)
-                .sink { connected in
-                    self.game = nil
-                    self.mode = .nameCode
+            api.gameSettings()
+                .sin {
+                    print($0)
+                } succ: {
+                    self.gameSettings = $0
+                    self.setupSocket()
                 }
                 .store(in: &canc)
         }
+    }
+    func setupSocket() {
+        sock = api.gameSock(gameField, gameSettings ?? .standard)
+        sock?.recieve()
+            .receive(on: DispatchQueue.main)
+            .sin { error in
+                print(error)
+            } succ: { value in
+                self.setGame(value)
+                self.startingGame = false
+                self.mode = .playing
+            }
+            .store(in: &canc)
+        sock?.connectionStatus()
+            .receive(on: DispatchQueue.main)
+            .sin { connected in
+                self.game = nil
+                self.mode = .nameCode
+            }
+            .store(in: &canc)
     }
     func copy() {
         guard let id = game?.id else {

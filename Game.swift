@@ -9,6 +9,24 @@ import SwiftUI
 import Combine
 
 class Game: ObservableObject {
+    struct Settings: Codable {
+        let initialBaseSize: Int
+        let setupPlacements: Int
+        let fortifyCount: Int
+        let basePerTurn: Int
+        let fortifyLandValue: Double
+        let landBlockGeneration: Double
+        static var standard: Self {
+            .init(
+                initialBaseSize: 2,
+                setupPlacements: 6,
+                fortifyCount: 2,
+                basePerTurn: 5,
+                fortifyLandValue: 0.5,
+                landBlockGeneration: 0.05
+            )
+        }
+    }
     enum Mode {
         case base
         case prep
@@ -22,8 +40,7 @@ class Game: ObservableObject {
     @Published var grid: Grid<Block>
     @Published var mode: Mode = .base
     @Published var hint: String?
-    let initialBaseSize = 2
-    let basePlacements = 6
+    let settings: Settings
     var players: [Player]
     var currentPlayerIndex = 0
     var id: String?
@@ -80,12 +97,15 @@ class Game: ObservableObject {
         case .base:
             return 1
         case .prep:
-            return basePlacements - currentPlayer.placed
+            return settings.setupPlacements - currentPlayer.placed
         case .combat:
-            return currentPlayer.placementsLeft
+            return Int(currentPlayerPlacements.rounded(.down)) - currentPlayer.placed
         }
     }
-    init(grid: Grid<Block>, players: [Player], currentPlayerIndex: Int = 0, mode: Mode, id: String?, local: Bool, user: String?) {
+    var currentPlayerPlacements: Double {
+        currentPlayer.land * settings.landBlockGeneration + Double(settings.basePerTurn)
+    }
+    init(grid: Grid<Block>, players: [Player], currentPlayerIndex: Int = 0, mode: Mode, id: String?, local: Bool, user: String?, settings: Settings) {
         self.grid = grid
         self.mode = mode
         self.players = players
@@ -93,9 +113,7 @@ class Game: ObservableObject {
         self.id = id
         self.local = local
         self.user = user
-    }
-    convenience init(grid: Grid<Block>, players: [Player], currentPlayerIndex: Int, mode: Mode = .base) {
-        self.init(grid: grid, players: players, currentPlayerIndex: currentPlayerIndex, mode: mode, id: nil, local: false, user: nil)
+        self.settings = settings
     }
     func placeBase(_ team: Team, i: Int) -> Bool {
         defer { clearHint() }
@@ -109,13 +127,13 @@ class Game: ObservableObject {
                 .pathLengthFromStart else {
                 continue
             }
-            if solutionDistance <= Double(basePlacements + 1) {
+            if solutionDistance <= Double(settings.setupPlacements + 1) {
                 hint = "You can be captured on the first turn with your base there. Pick somewhere further from enemies."
                 return false
             }
         }
         grid[i] = .init(blockType: .base(team))
-        var land = 1
+        var land = 1.0
         for point in grid.neighborPoints(i) {
             grid[point] = .init(blockType: .land(team, 1))
             land += 1
@@ -160,9 +178,8 @@ class Game: ObservableObject {
                 }
                 if stack == 1 {
                     players[enemyIndex].land -= 1
-                    grid[i] = .init(blockType: .land(team, 1))
+                    grid[i] = .empty
                     currentPlayer.placed += 1
-                    currentPlayer.land += 1
                     guard let baseIndex = grid.items.firstIndex(where: { $0.blockType == .base(blockTeam) }) else {
                         assertionFailure()
                         return false
@@ -183,11 +200,13 @@ class Game: ObservableObject {
                     }
                 } else {
                     grid[i] = .init(blockType: .land(blockTeam, stack - 1))
+                    players[enemyIndex].land -= settings.fortifyLandValue
                     currentPlayer.placed += 1
                 }
                 return true
             } else {
-                grid[i] = .init(blockType: .land(team, stack + 1))
+                grid[i] = .init(blockType: .land(team, stack + settings.fortifyCount))
+                players[playerIndex].land += settings.fortifyLandValue
                 currentPlayer.placed += 1
                 return true
             }
@@ -241,7 +260,7 @@ class Game: ObservableObject {
             }
         case .prep:
             let placed = placePending(currentPlayer.team, i: i)
-            if placed, currentPlayer.placed >= basePlacements {
+            if placed, currentPlayer.placed >= settings.setupPlacements {
                 currentPlayer.placed = 0
                 if advancePlayers() {
                     mode = .base
@@ -251,7 +270,7 @@ class Game: ObservableObject {
             }
         case .combat:
             let placed = placePending(currentPlayer.team, i: i)
-            if placed, Double(currentPlayer.placed) >= currentPlayer.placements.rounded(.down) {
+            if placed, blocksLeft <= 0 {
                 currentPlayer.placed = 0
                 advancePlayers()
                 while currentPlayer.dead {

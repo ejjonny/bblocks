@@ -28,7 +28,7 @@ extension API {
                 }
                 .mapError { $0 as Error }
                 .eraseToAnyPublisher()
-        } gameSock: { id in
+        } gameSock: { id, settings in
             var req = URLRequest(url: URL(string: "ws://\(base.rawValue)/gameSock?id=\(id)")!)
             req.timeoutInterval = 5
             let sock = WebSocket(request: req)
@@ -38,7 +38,7 @@ extension API {
             sock.onEvent = { event in
                 switch event {
                 case .text(let string):
-                    if let game = Game(string) {
+                    if let game = Game(string, settings: settings) {
                         textPassthrough.send(game)
                     } else {
                         textPassthrough.send(completion: .failure(LocalError()))
@@ -74,6 +74,14 @@ extension API {
             } close: {
                 sock.disconnect()
             }
+        } gameSettings: {
+            var req = URLRequest(url: URL(string: "http://\(base.rawValue)/settings.json")!)
+            req.httpMethod = "GET"
+            return URLSession.shared.dataTaskPublisher(for: req)
+                .map(\.data)
+                .decode(type: Game.Settings.self, decoder: JSONDecoder())
+                .mapError { $0 as Error }
+                .eraseToAnyPublisher()
         }
     }
 }

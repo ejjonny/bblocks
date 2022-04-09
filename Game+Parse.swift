@@ -8,7 +8,7 @@
 import Parsing
 
 extension Game {
-    convenience init?(_ input: String) {
+    convenience init?(_ input: String, settings: Settings) {
         let block = Parse {
             OneOf {
                 Parse {
@@ -51,7 +51,7 @@ extension Game {
                     }
                     Parse {
                         "l"
-                        Int.parser()
+                        Double.parser()
                     }
                     Parse {
                         "b"
@@ -87,12 +87,32 @@ extension Game {
             modes
             
         }
-            .map(Game.init(grid:players:currentPlayerIndex:mode:))
+            .map {
+                Game(
+                    grid: $0.0,
+                    players: $0.1,
+                    currentPlayerIndex: $0.2,
+                    mode: $0.3,
+                    id: nil,
+                    local: false,
+                    user: nil,
+                    settings: settings
+                )
+            }
         
         guard let parsed = try? main.parse(input) else {
             return nil
         }
-        self.init(grid: parsed.grid, players: parsed.players, currentPlayerIndex: parsed.currentPlayerIndex, mode: parsed.mode)
+        self.init(
+            grid: parsed.grid,
+            players: parsed.players,
+            currentPlayerIndex: parsed.currentPlayerIndex,
+            mode: parsed.mode,
+            id: parsed.id,
+            local: parsed.local,
+            user: parsed.user,
+            settings: settings
+        )
     }
 }
 

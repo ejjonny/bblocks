@@ -55,11 +55,11 @@ struct GameView: View {
                                     .appText()
                                     .foregroundColor(game.players[i].team.color)
                                 VStack(alignment: .leading) {
-                                    Text("Land: \(game.players[i].land)")
+                                    Text(String(format: "Land: %.2f", game.players[i].land))
                                         .appText2()
                                     Text("Bases: \(game.players[i].bases)")
                                         .appText2()
-                                    Text(String(format: "Blocks/turn: %.2f", game.players[i].placements))
+                                    Text(String(format: "Blocks/turn: %.2f", game.currentPlayerPlacements))
                                         .appText2()
                                 }
                             }
